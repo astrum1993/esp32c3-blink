@@ -1,15 +1,56 @@
-image: gitpod/workspace-full
+image: ghcr.io/espressif/esp-idf:release-v5.1
+
+# Включение prebuilds для ускорения первого запуска
+github:
+  prebuilds:
+    enable: true
+    master: true
+    branches: true
+    pullRequests: true
 
 tasks:
-  - name: Setup ESP-IDF
+  - name: Setup Environment
     init: |
-      # Установка ESP-IDF
-      git clone --recursive https://github.com/espressif/esp-idf.git
-      cd esp-idf && ./install.sh esp32c3
-      . ./export.sh
-      # Копирование примера Blink
-      cp -r examples/get-started/blink ~/workspace/esp32c3-blink/
-      cd ~/workspace/esp32c3-blink/blink
+      # Кэширование компонентов ESP-IDF
+      if [ ! -d "$HOME/.cache/esp-idf" ]; then
+        mkdir -p "$HOME/.cache/esp-idf"
+        ln -s "$HOME/.cache/esp-idf" "$IDF_PATH"
+        . $IDF_PATH/install.sh esp32c3
+      fi
+      . $IDF_PATH/export.sh
+      
+      # Создание проекта blink
+      mkdir -p $GITPOD_REPO_ROOT/main
+      cp $IDF_PATH/examples/get-started/blink/main/CMakeLists.txt $GITPOD_REPO_ROOT/main/
+      echo "#include <stdio.h>
+      #include \"freertos/FreeRTOS.h\"
+      #include \"freertos/task.h\"
+      #include \"driver/gpio.h\"
+      #include \"esp_log.h\"
 
-  - name: Build project
+      #define BLINK_GPIO 8
+      #define TAG \"BLINK\"
+
+      void app_main(void) {
+          gpio_reset_pin(BLINK_GPIO);
+          gpio_set_direction(BLINK_GPIO, GPIO_MODE_OUTPUT);
+          ESP_LOGI(TAG, \"Starting blink example\");
+          while (1) {
+              gpio_set_level(BLINK_GPIO, 1);
+              ESP_LOGI(TAG, \"LED ON\");
+              vTaskDelay(1000 / portTICK_PERIOD_MS);
+              gpio_set_level(BLINK_GPIO, 0);
+              ESP_LOGI(TAG, \"LED OFF\");
+              vTaskDelay(1000 / portTICK_PERIOD_MS);
+          }
+      }" > $GITPOD_REPO_ROOT/main/blink.c
     command: idf.py build
+
+vscode:
+  extensions:
+    - espressif.esp-idf-extension@latest
+    - ms-vscode.cpptools@latest
+
+ports:
+  - port: 3333
+    onOpen: ignore
