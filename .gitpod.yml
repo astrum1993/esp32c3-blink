@@ -1,11 +1,15 @@
 image: gitpod/workspace-full
-   tasks:
-     - init: |
-         # Установка ESP-IDF
-         git clone --recursive https://github.com/espressif/esp-idf.git
-         cd esp-idf && ./install.sh esp32c3
-         . ./export.sh
-         # Копирование примера Blink
-         cp -r examples/get-started/blink ~/workspace/esp32c3-blink/
-         cd ~/workspace/esp32c3-blink/blink
-     - command: idf.py build
+
+tasks:
+  - name: Setup ESP-IDF
+    init: |
+      # Установка ESP-IDF
+      git clone --recursive https://github.com/espressif/esp-idf.git
+      cd esp-idf && ./install.sh esp32c3
+      . ./export.sh
+      # Копирование примера Blink
+      cp -r examples/get-started/blink ~/workspace/esp32c3-blink/
+      cd ~/workspace/esp32c3-blink/blink
+
+  - name: Build project
+    command: idf.py build
