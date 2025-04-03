@@ -1,4 +1,4 @@
-image: ghcr.io/espressif/esp-idf:release-v5.1
+image: espressif/idf:release-v5.1
 
 # Включение prebuilds для ускорения первого запуска
 github:
