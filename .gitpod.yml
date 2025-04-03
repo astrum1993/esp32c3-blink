@@ -1,17 +1,18 @@
 image: gitpod/workspace-base
 
 tasks:
-  - name: Setup ESP32-C3
+  - name: Setup ESP32-C3 Environment
     init: |
       # Установка зависимостей
-      sudo apt-get update && sudo apt-get install -y git wget flex bison gperf python3 cmake ninja-build ccache
+      sudo apt-get update
+      sudo apt-get install -y git wget flex bison gperf python3 cmake ninja-build ccache
       
-      # Скачиваем ESP-IDF
+      # Клонирование ESP-IDF
       git clone -b v5.1.1 --recursive https://github.com/espressif/esp-idf.git
       ./esp-idf/install.sh esp32c3
       . ./esp-idf/export.sh
       
-      # Создаем минимальный проект Blink
+      # Создание минимального проекта
       mkdir -p main
       echo 'idf_component_register(SRCS "blink.c" INCLUDE_DIRS "")' > main/CMakeLists.txt
       cat > main/blink.c << 'EOF'
@@ -30,6 +31,4 @@ void app_main() {
     }
 }
 EOF
-    command: |
-      idf.py set-target esp32c3
-      idf.py build
+    command: idf.py set-target esp32c3 && idf.py build
