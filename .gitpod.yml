@@ -5,10 +5,11 @@ tasks:
     init: >
       sudo apt-get update &&
       sudo apt-get install -y git wget flex bison gperf python3 cmake ninja-build ccache &&
-      git clone -b v4.4.4 --recursive https://github.com/espressif/esp-idf.git &&
+      git clone --recursive -b v4.4.4 https://github.com/espressif/esp-idf.git &&
+      cd esp-idf && git submodule update --init --recursive && cd .. &&
       ./esp-idf/install.sh esp32c3 &&
       . ./esp-idf/export.sh &&
       mkdir -p main &&
       echo 'idf_component_register(SRCS "blink.c")' > main/CMakeLists.txt &&
-      printf '#include "driver/gpio.h"\n#include "freertos/FreeRTOS.h"\n#include "freertos/task.h"\n\n#define BLINK_GPIO 8\n#define BLINK_DELAY_MS 100\n\nvoid app_main() {\n    // Минимальная инициализация (без лишних проверок)\n    gpio_reset_pin(BLINK_GPIO);\n    gpio_set_direction(BLINK_GPIO, GPIO_MODE_OUTPUT);\n    \n    // Быстрый старт (первое включение без задержки)\n    gpio_set_level(BLINK_GPIO, 1);\n    \n    while(1) {\n        gpio_set_level(BLINK_GPIO, !gpio_get_level(BLINK_GPIO));\n        vTaskDelay(BLINK_DELAY_MS / portTICK_PERIOD_MS);\n    }\n}' > main/blink.c
+      printf '#include "driver/gpio.h"\n#include "freertos/FreeRTOS.h"\n#include "freertos/task.h"\n\n#define BLINK_GPIO 8\n#define BLINK_DELAY_MS 100\n\nvoid app_main() {\n    gpio_reset_pin(BLINK_GPIO);\n    gpio_set_direction(BLINK_GPIO, GPIO_MODE_OUTPUT);\n    gpio_set_level(BLINK_GPIO, 1);\n    while(1) {\n        gpio_set_level(BLINK_GPIO, !gpio_get_level(BLINK_GPIO));\n        vTaskDelay(BLINK_DELAY_MS / portTICK_PERIOD_MS);\n    }\n}' > main/blink.c
     command: idf.py set-target esp32c3 && idf.py build
