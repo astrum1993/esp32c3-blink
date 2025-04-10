@@ -1,36 +1,43 @@
 image: gitpod/workspace-base
 
 tasks:
-  - name: ESP32-C3 Blink Setup
+  - name: ESP32-C3 Full Setup
     init: |
-      # Устанавливаем зависимости
-      sudo apt-get update &&
-      sudo apt-get install -y python3 python3-pip git wget flex bison gperf cmake ninja-build ccache libusb-1.0-0 &&
+      # Установка зависимостей
+      sudo apt-get update && sudo apt-get install -y \
+          git wget flex bison gperf python3 python3-pip cmake ninja-build ccache \
+          libusb-1.0-0 libncurses5-dev
+
+      # Клонирование ESP-IDF с глубокой рекурсией
+      git clone --depth=1 --recursive --shallow-submodules -b v4.4.4 \
+          https://github.com/espressif/esp-idf.git
       
-      # Клонируем ESP-IDF
-      git clone --recursive -b v4.4.4 https://github.com/espressif/esp-idf.git &&
+      # Принудительная загрузка всех подмодулей
+      cd esp-idf
+      git submodule update --init --recursive --depth=1
+      cd ..
       
-      # Устанавливаем инструменты
-      ./esp-idf/install.sh esp32c3 &&
-      . ./esp-idf/export.sh &&
-      
-      # Создаем структуру проекта
-      mkdir -p blink_project/main &&
-      cd blink_project &&
-      
+      # Установка инструментов
+      ./esp-idf/install.sh esp32c3
+      . ./esp-idf/export.sh
+
+      # Создание структуры проекта
+      mkdir -p blink_project/main
+      cd blink_project
+
       # Корневой CMakeLists.txt
       cat > CMakeLists.txt << 'EOF'
       cmake_minimum_required(VERSION 3.5)
       include($ENV{IDF_PATH}/tools/cmake/project.cmake)
       project(blink)
       EOF
-      
-      # CMakeLists для main компонента
+
+      # Компонент main
       cat > main/CMakeLists.txt << 'EOF'
       idf_component_register(SRCS "blink.c"
                             INCLUDE_DIRS ".")
       EOF
-      
+
       # Исходный код
       cat > main/blink.c << 'EOF'
       #include "driver/gpio.h"
@@ -44,10 +51,13 @@ tasks:
           gpio_set_direction(BLINK_GPIO, GPIO_MODE_OUTPUT);
           while(1) {
               gpio_set_level(BLINK_GPIO, 1);
-              vTaskDelay(500 / portTICK_PERIOD_MS);
+              vTaskDelay(250 / portTICK_PERIOD_MS);
               gpio_set_level(BLINK_GPIO, 0);
-              vTaskDelay(500 / portTICK_PERIOD_MS);
+              vTaskDelay(250 / portTICK_PERIOD_MS);
           }
       }
       EOF
-    command: cd blink_project && idf.py set-target esp32c3 && idf.py build
+    command: |
+      cd blink_project
+      idf.py set-target esp32c3
+      idf.py build
