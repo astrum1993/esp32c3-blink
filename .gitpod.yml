@@ -1,14 +1,14 @@
-image: gitpod/workspace-base
+ image: gitpod/workspace-base
 
 tasks:
   - name: ESP32-C3 Blink Setup
     init: >
       sudo apt-get update &&
-      sudo apt-get install -y git wget flex bison gperf python3 cmake ninja-build ccache &&
+      sudo apt-get install -y git wget &&
       git clone -b v5.1.1 --recursive https://github.com/espressif/esp-idf.git &&
       ./esp-idf/install.sh esp32c3 &&
       . ./esp-idf/export.sh &&
       mkdir -p main &&
-      echo 'idf_component_register(SRCS "blink.c" INCLUDE_DIRS "")' > main/CMakeLists.txt &&
-      printf '#include "driver/gpio.h"\n#include "freertos/FreeRTOS.h"\n#include "freertos/task.h"\n\nvoid app_main(void) {\n    gpio_reset_pin(8);\n    gpio_set_direction(8, GPIO_MODE_OUTPUT);\n    while(1) {\n        gpio_set_level(8, 1);\n        vTaskDelay(500 / portTICK_PERIOD_MS);\n        gpio_set_level(8, 0);\n        vTaskDelay(500 / portTICK_PERIOD_MS);\n    }\n}' > main/blink.c
+      echo 'idf_component_register(SRCS "blink.c")' > main/CMakeLists.txt &&
+      printf '#include "driver/gpio.h"\n#include "freertos/task.h"\n\nvoid app_main() {\n    gpio_set_direction(8, GPIO_MODE_OUTPUT);\n    while(1) {\n        gpio_set_level(8, !gpio_get_level(8));\n        vTaskDelay(500);\n    }\n}' > main/blink.c
     command: idf.py set-target esp32c3 && idf.py build
