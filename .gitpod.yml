@@ -18,6 +18,13 @@ tasks:
       mkdir -p blink_project/main &&
       cd blink_project &&
       
+      # Корневой CMakeLists.txt
+      cat > CMakeLists.txt << 'EOF'
+      cmake_minimum_required(VERSION 3.5)
+      include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+      project(blink)
+      EOF
+      
       # CMakeLists для main компонента
       cat > main/CMakeLists.txt << 'EOF'
       idf_component_register(SRCS "blink.c"
